@@ -1,21 +1,28 @@
 const mongoose = require("mongoose");
 
-const portfolioSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+const portfolioSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    name: {
+      type: String,
+      required: [true, "Portfolio name is required"],
+      trim: true,
+      maxlength: [50, "Portfolio name cannot exceed 50 characters"],
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [200, "Description cannot exceed 200 characters"],
+      default: "",
+    },
   },
-  name: {
-    type: String,
-    required: [true, "Portfolio name is required"],
-    trim: true,
-    maxlength: [50, "Portfolio name cannot exceed 50 characters"],
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   },
-  description: {
-    type: String,
-    trim: true,
-    maxlength: [200, "Description cannot exceed 200 characters"],
-    default: "",
-  },
-});
+);
