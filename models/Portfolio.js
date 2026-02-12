@@ -19,6 +19,29 @@ const portfolioSchema = new mongoose.Schema(
       maxlength: [200, "Description cannot exceed 200 characters"],
       default: "",
     },
+    cashBalance: {
+      type: Number,
+      default: 10000, // Each portfolio starts with $10,000 virtual cash
+      min: [0, "Cash balance cannot be negative"],
+    },
+    // Holdings is a map of symbol -> { quantity, avgBuyPrice }
+    holdings: [
+      {
+        cryptoSymbol: { type: String, required: true, uppercase: true },
+        cryptoName: { type: String, required: true },
+        quantity: { type: Number, required: true, min: 0 },
+        avgBuyPrice: { type: Number, required: true },
+        imageUrl: { type: String, default: "" },
+      },
+    ],
+    totalInvested: {
+      type: Number,
+      default: 0,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
