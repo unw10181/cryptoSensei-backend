@@ -50,4 +50,17 @@ userSchema.methods.isCorrectPassword = function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-module.exports = model("User", userSchema);
+//Method to update rank based on HP
+userSchema.methods.updateRank = function () {
+  const xp = this.totalXP;
+  if (xp >= 50000) this.rank = "Monarch";
+  else if (xp >= 20000) this.rank = "National-Level";
+  else if (xp >= 10000) this.rank = "S-Rank";
+  else if (xp >= 5000) this.rank = "A-Rank";
+  else if (xp >= 2000) this.rank = "B-Rank";
+  else if (xp >= 500) this.rank = "C-Rank";
+  else if (xp >= 100) this.rank = "D-Rank";
+  else this.rank = "E-Rank";
+};
+
+module.exports = mongoose.model("User", userSchema);
