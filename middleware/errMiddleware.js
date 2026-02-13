@@ -1,7 +1,6 @@
-// Async handler wrapper so it eliminates try/catch boilerplate 
+// Async handler wrapper so it eliminates try/catch boilerplate
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
-
 
 // Custom error class
 class AppError extends Error {
@@ -14,3 +13,8 @@ class AppError extends Error {
   }
 }
 
+// Global error handler middleware
+const errorHandler = (err, req, res, next) => {
+  let error = { ...err };
+  error.message = err.message;
+};
