@@ -1,42 +1,51 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
-const userSchema = new Schema({
-  username: {
-    type: String,
-    required: [true, "Username is required"],
-    unique: true,
-    minlength: [4, "Username must be atleast 4 characters"],
-    maxlength: [15, "Username must not exceed 15 characters"],
+const userSchema = new Schema(
+  {
+    username: {
+      type: String,
+      required: [true, "Username is required"],
+      unique: true,
+      minlength: [4, "Username must be atleast 4 characters"],
+      maxlength: [15, "Username must not exceed 15 characters"],
+    },
+    email: {
+      type: String,
+      unique: true,
+      required: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: [6, "Password must be at least 6 characters"],
+      select: false, // never return password in queries
+    },
+    virtualBalance: {
+      type: Number,
+      default: 100000, // Start with $100,000 virtual dollars
+    },
+    avatar: {
+      type: String,
+      default: "default_avatar",
+    },
   },
-  email: {
-    type: String,
-    unique: true,
-    required: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
+  {
+    timestamps: true,
   },
-  password: {
-    type: String,
-    required: true,
-  },
-  virtualBalance: {
-    type: Number,
-    default: 100000, // Start with $100,000 virtual dollars
-  },
-  avatar: {
-    type: String,
-    default: "default_avatar",
-  },
+);
+// Hash password before saving
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
-userSchema.pre("save", async () => {
-  if (!this.isModified("password")) return;
-
-  this.password = await bcrypt.hash(this.password, 10);
-});
-
+// Compare entered password to hashed passwords
 userSchema.methods.isCorrectPassword = function (password) {
   return bcrypt.compare(password, this.password);
 };
