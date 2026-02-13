@@ -2,9 +2,9 @@ const Portfolio = require("../models/Portfolio");
 const Transaction = require("../models/Transaction");
 const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
 
-// @desc    Get all portfolios for logged-in user
-// @route   GET /api/portfolios
-// @access  Private
+//   Get all portfolios for logged-in user
+//   GET /api/portfolios
+// All Private methods
 const getPortfolios = asyncHandler(async (req, res) => {
   const portfolios = await Portfolio.find({
     userId: req.user._id,
@@ -18,15 +18,13 @@ const getPortfolios = asyncHandler(async (req, res) => {
   });
 });
 
-
-// @desc    Create new portfolio
-// @route   POST /api/portfolios
-// @access  Private
+//       Create new portfolio
+// api:   POST /api/portfolios
 const createPortfolio = asyncHandler(async (req, res, next) => {
   const { name, description, startingCash } = req.body;
 
   if (!name) {
-    return next(new AppError('Portfolio name is required', 400));
+    return next(new AppError("Portfolio name is required", 400));
   }
 
   // Cap starting cash between 1000 and 100000
@@ -35,44 +33,41 @@ const createPortfolio = asyncHandler(async (req, res, next) => {
   const portfolio = await Portfolio.create({
     userId: req.user._id,
     name,
-    description: description || '',
+    description: description || "",
     cashBalance: cashAmount,
   });
 
   res.status(201).json({ success: true, data: portfolio });
 });
 
-
-// ─── @desc    Get single portfolio by ID
-// ─── @route   GET /api/portfolios/:id
-// ─── @access  Private
+//   Get single portfolio by ID
+// route:   GET /api/portfolios/:id
 const getPortfolio = asyncHandler(async (req, res, next) => {
   const portfolio = await Portfolio.findById(req.params.id);
 
   if (!portfolio) {
-    return next(new AppError('Portfolio not found', 404));
+    return next(new AppError("Portfolio not found", 404));
   }
 
   // Ensure portfolio belongs to requesting user
   if (portfolio.userId.toString() !== req.user._id.toString()) {
-    return next(new AppError('Not authorized to access this portfolio', 403));
+    return next(new AppError("Not authorized to access this portfolio", 403));
   }
 
   res.status(200).json({ success: true, data: portfolio });
 });
 
-// ─── @desc    Update portfolio (name or description only)
-// ─── @route   PUT /api/portfolios/:id
-// ─── @access  Private
+//   Update portfolio (name or description only)
+//   PUT /api/portfolios/:id
 const updatePortfolio = asyncHandler(async (req, res, next) => {
   let portfolio = await Portfolio.findById(req.params.id);
 
   if (!portfolio) {
-    return next(new AppError('Portfolio not found', 404));
+    return next(new AppError("Portfolio not found", 404));
   }
 
   if (portfolio.userId.toString() !== req.user._id.toString()) {
-    return next(new AppError('Not authorized to update this portfolio', 403));
+    return next(new AppError("Not authorized to update this portfolio", 403));
   }
 
   const { name, description } = req.body;
@@ -83,44 +78,46 @@ const updatePortfolio = asyncHandler(async (req, res, next) => {
   portfolio = await Portfolio.findByIdAndUpdate(
     req.params.id,
     { $set: updateFields },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   res.status(200).json({ success: true, data: portfolio });
 });
 
-// ─── @desc    Delete portfolio (soft delete)
-// ─── @route   DELETE /api/portfolios/:id
-// ─── @access  Private
+//    Delete portfolio (soft delete)
+//    DELETE /api/portfolios/:id
+//   Private
 const deletePortfolio = asyncHandler(async (req, res, next) => {
   const portfolio = await Portfolio.findById(req.params.id);
 
   if (!portfolio) {
-    return next(new AppError('Portfolio not found', 404));
+    return next(new AppError("Portfolio not found", 404));
   }
 
   if (portfolio.userId.toString() !== req.user._id.toString()) {
-    return next(new AppError('Not authorized to delete this portfolio', 403));
+    return next(new AppError("Not authorized to delete this portfolio", 403));
   }
 
   // Soft delete
   await Portfolio.findByIdAndUpdate(req.params.id, { isActive: false });
 
-  res.status(200).json({ success: true, message: 'Portfolio deleted successfully' });
+  res
+    .status(200)
+    .json({ success: true, message: "Portfolio deleted successfully" });
 });
 
-// ─── @desc    Get portfolio performance metrics
-// ─── @route   GET /api/portfolios/:id/performance
-// ─── @access  Private
+//    Get portfolio performance metrics
+//    GET /api/portfolios/:id/performance
+//    Private API
 const getPortfolioPerformance = asyncHandler(async (req, res, next) => {
   const portfolio = await Portfolio.findById(req.params.id);
 
   if (!portfolio) {
-    return next(new AppError('Portfolio not found', 404));
+    return next(new AppError("Portfolio not found", 404));
   }
 
   if (portfolio.userId.toString() !== req.user._id.toString()) {
-    return next(new AppError('Not authorized', 403));
+    return next(new AppError("Not authorized", 403));
   }
 
   // Get all transactions for this portfolio
@@ -129,16 +126,16 @@ const getPortfolioPerformance = asyncHandler(async (req, res, next) => {
   }).sort({ createdAt: 1 });
 
   const totalBought = transactions
-    .filter((t) => t.type === 'buy')
+    .filter((t) => t.type === "buy")
     .reduce((acc, t) => acc + t.totalValue, 0);
 
   const totalSold = transactions
-    .filter((t) => t.type === 'sell')
+    .filter((t) => t.type === "sell")
     .reduce((acc, t) => acc + t.totalValue, 0);
 
   const totalTrades = transactions.length;
-  const buyTrades = transactions.filter((t) => t.type === 'buy').length;
-  const sellTrades = transactions.filter((t) => t.type === 'sell').length;
+  const buyTrades = transactions.filter((t) => t.type === "buy").length;
+  const sellTrades = transactions.filter((t) => t.type === "sell").length;
 
   res.status(200).json({
     success: true,
@@ -157,3 +154,12 @@ const getPortfolioPerformance = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+module.exports = {
+  getPortfolios,
+  createPortfolio,
+  getPortfolio,
+  updatePortfolio,
+  deletePortfolio,
+  getPortfolioPerformance,
+};
