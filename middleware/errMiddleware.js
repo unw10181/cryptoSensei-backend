@@ -23,4 +23,11 @@ const errorHandler = (err, req, res, next) => {
     error.message = `Resource not found`;
     error.statusCode = 404;
   }
-};;
+};
+
+// Mongoose duplicate key
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyValue)[0];
+    error.message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
+    error.statusCode = 400;
+  }
