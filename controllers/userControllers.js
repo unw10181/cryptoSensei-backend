@@ -21,7 +21,7 @@ const getUserProfile = asyncHandler(async (req, res, next) => {
 const updateUserProfile = asyncHandler(async (req, res, next) => {
   // Ensure user can only update their own profile
   if (req.params.id !== req.user._id.toString()) {
-    return next(new AppError('Not authorized to update this profile', 403));
+    return next(new AppError("Not authorized to update this profile", 403));
   }
 
   const { username, email, avatar } = req.body;
@@ -35,11 +35,11 @@ const updateUserProfile = asyncHandler(async (req, res, next) => {
   const updatedUser = await User.findByIdAndUpdate(
     req.params.id,
     { $set: updateFields },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   if (!updatedUser) {
-    return next(new AppError('User not found', 404));
+    return next(new AppError("User not found", 404));
   }
 
   res.status(200).json({ success: true, data: updatedUser });
@@ -51,7 +51,7 @@ const updateUserProfile = asyncHandler(async (req, res, next) => {
 const getUserAchievements = asyncHandler(async (req, res, next) => {
   const userAchievements = await UserAchievement.find({
     userId: req.params.id,
-  }).populate('achievementId');
+  }).populate("achievementId");
 
   res.status(200).json({
     success: true,
@@ -60,7 +60,6 @@ const getUserAchievements = asyncHandler(async (req, res, next) => {
   });
 });
 
-
 // ─── @desc    Get user stats summary
 // ─── @route   GET /api/users/:id/stats
 // ─── @access  Private
@@ -68,7 +67,7 @@ const getUserStats = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.params.id);
 
   if (!user) {
-    return next(new AppError('User not found', 404));
+    return next(new AppError("User not found", 404));
   }
 
   const achievementsCount = await UserAchievement.countDocuments({
@@ -87,3 +86,9 @@ const getUserStats = asyncHandler(async (req, res, next) => {
   });
 });
 
+module.exports = {
+  getUserProfile,
+  updateUserProfile,
+  getUserAchievements,
+  getUserStats,
+};
