@@ -35,15 +35,35 @@ const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return next(new AppError('Please provide email and password', 400));
+    return next(new AppError("Please provide email and password", 400));
   }
 
   // Find user and include password for comparison
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.matchPassword(password))) {
-    return next(new AppError('Invalid email or password', 401));
+    return next(new AppError("Invalid email or password", 401));
   }
 
   sendTokenResponse(user, 200, res);
 });
+
+// ─── @desc    Logout user (client-side token removal, server confirms)
+// ─── @route   POST /api/auth/logout
+// ─── @access  Private
+const logout = asyncHandler(async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully. Please remove token on client.",
+  });
+});
+
+// ─── @desc    Get currently logged-in user
+// ─── @route   GET /api/auth/me
+// ─── @access  Private
+const getMe = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  res.status(200).json({ success: true, data: user });
+});
+
+module.exports = { register, login, logout, getMe };
