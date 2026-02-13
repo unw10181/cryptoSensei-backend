@@ -2,9 +2,9 @@ const Portfolio = require("../models/Portfolio");
 const Transaction = require("../models/Transaction");
 const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
 
-// ─── @desc    Get all portfolios for logged-in user
-// ─── @route   GET /api/portfolios
-// ─── @access  Private
+// @desc    Get all portfolios for logged-in user
+// @route   GET /api/portfolios
+// @access  Private
 const getPortfolios = asyncHandler(async (req, res) => {
   const portfolios = await Portfolio.find({
     userId: req.user._id,
@@ -19,9 +19,9 @@ const getPortfolios = asyncHandler(async (req, res) => {
 });
 
 
-// ─── @desc    Create new portfolio
-// ─── @route   POST /api/portfolios
-// ─── @access  Private
+// @desc    Create new portfolio
+// @route   POST /api/portfolios
+// @access  Private
 const createPortfolio = asyncHandler(async (req, res, next) => {
   const { name, description, startingCash } = req.body;
 
@@ -41,3 +41,26 @@ const createPortfolio = asyncHandler(async (req, res, next) => {
 
   res.status(201).json({ success: true, data: portfolio });
 });
+
+
+// ─── @desc    Get single portfolio by ID
+// ─── @route   GET /api/portfolios/:id
+// ─── @access  Private
+const getPortfolio = asyncHandler(async (req, res, next) => {
+  const portfolio = await Portfolio.findById(req.params.id);
+
+  if (!portfolio) {
+    return next(new AppError('Portfolio not found', 404));
+  }
+
+  // Ensure portfolio belongs to requesting user
+  if (portfolio.userId.toString() !== req.user._id.toString()) {
+    return next(new AppError('Not authorized to access this portfolio', 403));
+  }
+
+  res.status(200).json({ success: true, data: portfolio });
+});
+
+
+
+
