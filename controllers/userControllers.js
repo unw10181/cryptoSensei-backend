@@ -45,5 +45,45 @@ const updateUserProfile = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: updatedUser });
 });
 
+// ─── @desc    Get user's unlocked achievements
+// ─── @route   GET /api/users/:id/achievements
+// ─── @access  Private
+const getUserAchievements = asyncHandler(async (req, res, next) => {
+  const userAchievements = await UserAchievement.find({
+    userId: req.params.id,
+  }).populate('achievementId');
 
+  res.status(200).json({
+    success: true,
+    count: userAchievements.length,
+    data: userAchievements,
+  });
+});
+
+
+// ─── @desc    Get user stats summary
+// ─── @route   GET /api/users/:id/stats
+// ─── @access  Private
+const getUserStats = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  const achievementsCount = await UserAchievement.countDocuments({
+    userId: req.params.id,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      username: user.username,
+      rank: user.rank,
+      totalXP: user.totalXP,
+      virtualBalance: user.virtualBalance,
+      achievementsUnlocked: achievementsCount,
+    },
+  });
+});
 
