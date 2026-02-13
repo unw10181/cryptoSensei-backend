@@ -89,5 +89,23 @@ const updatePortfolio = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: portfolio });
 });
 
+// ─── @desc    Delete portfolio (soft delete)
+// ─── @route   DELETE /api/portfolios/:id
+// ─── @access  Private
+const deletePortfolio = asyncHandler(async (req, res, next) => {
+  const portfolio = await Portfolio.findById(req.params.id);
 
+  if (!portfolio) {
+    return next(new AppError('Portfolio not found', 404));
+  }
+
+  if (portfolio.userId.toString() !== req.user._id.toString()) {
+    return next(new AppError('Not authorized to delete this portfolio', 403));
+  }
+
+  // Soft delete
+  await Portfolio.findByIdAndUpdate(req.params.id, { isActive: false });
+
+  res.status(200).json({ success: true, message: 'Portfolio deleted successfully' });
+});
 
