@@ -17,4 +17,10 @@ class AppError extends Error {
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
-};
+
+  // Mongoose bad ObjectId
+  if (err.name === "CastError") {
+    error.message = `Resource not found`;
+    error.statusCode = 404;
+  }
+};;
