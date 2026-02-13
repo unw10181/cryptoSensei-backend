@@ -17,7 +17,18 @@ const userSchema = new Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
   },
-  password: { type: String, required: true },
+  password: {
+    type: String,
+    required: true,
+  },
+  virtualBalance: {
+    type: Number,
+    default: 100000, // Start with $100,000 virtual dollars
+  },
+  avatar: {
+    type: String,
+    default: "default_avatar",
+  },
 });
 
 userSchema.pre("save", async () => {
