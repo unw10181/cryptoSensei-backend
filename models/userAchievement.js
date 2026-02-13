@@ -22,7 +22,7 @@ const userAchievementSchema = new mongoose.Schema(
   },
 );
 
-// Code below is to Prevent duplicate unlocks 
+// Code below is to Prevent duplicate unlocks
 userAchievementSchema.index({ userId: 1, achievementId: 1 }, { unique: true });
 
 module.exports = mongoose.model("UserAchievement", userAchievementSchema);
