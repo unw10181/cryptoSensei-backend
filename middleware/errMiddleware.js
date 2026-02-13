@@ -31,3 +31,11 @@ const errorHandler = (err, req, res, next) => {
     error.message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
     error.statusCode = 400;
   }
+
+  // Mongoose validation error
+  if (err.name === 'ValidationError') {
+    error.message = Object.values(err.errors)
+      .map((val) => val.message)
+      .join(', ');
+    error.statusCode = 400;
+  }
