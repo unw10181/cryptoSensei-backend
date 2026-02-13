@@ -109,3 +109,51 @@ const deletePortfolio = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Portfolio deleted successfully' });
 });
 
+// ─── @desc    Get portfolio performance metrics
+// ─── @route   GET /api/portfolios/:id/performance
+// ─── @access  Private
+const getPortfolioPerformance = asyncHandler(async (req, res, next) => {
+  const portfolio = await Portfolio.findById(req.params.id);
+
+  if (!portfolio) {
+    return next(new AppError('Portfolio not found', 404));
+  }
+
+  if (portfolio.userId.toString() !== req.user._id.toString()) {
+    return next(new AppError('Not authorized', 403));
+  }
+
+  // Get all transactions for this portfolio
+  const transactions = await Transaction.find({
+    portfolioId: req.params.id,
+  }).sort({ createdAt: 1 });
+
+  const totalBought = transactions
+    .filter((t) => t.type === 'buy')
+    .reduce((acc, t) => acc + t.totalValue, 0);
+
+  const totalSold = transactions
+    .filter((t) => t.type === 'sell')
+    .reduce((acc, t) => acc + t.totalValue, 0);
+
+  const totalTrades = transactions.length;
+  const buyTrades = transactions.filter((t) => t.type === 'buy').length;
+  const sellTrades = transactions.filter((t) => t.type === 'sell').length;
+
+  res.status(200).json({
+    success: true,
+    data: {
+      portfolioId: portfolio._id,
+      portfolioName: portfolio.name,
+      cashBalance: portfolio.cashBalance,
+      holdings: portfolio.holdings,
+      totalInvested: portfolio.totalInvested,
+      totalBought,
+      totalSold,
+      totalTrades,
+      buyTrades,
+      sellTrades,
+      recentTransactions: transactions.slice(-5),
+    },
+  });
+});
