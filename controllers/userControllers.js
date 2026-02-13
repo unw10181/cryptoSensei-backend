@@ -2,9 +2,9 @@ const User = require("../models/User");
 const UserAchievement = require("../models/userAchievement");
 const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
 
-// ─── @desc    Get user profile by ID
-// ─── @route   GET /api/users/:id
-// ─── @access  Private
+//    Get user profile by ID
+//    GET /api/users/:id
+// Private Methods
 const getUserProfile = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.params.id);
 
@@ -15,9 +15,9 @@ const getUserProfile = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: user });
 });
 
-// ─── @desc    Update user profile
-// ─── @route   PUT /api/users/:id
-// ─── @access  Private
+/*   Update user profile
+//   PUT /api/users/:id
+*/
 const updateUserProfile = asyncHandler(async (req, res, next) => {
   // Ensure user can only update their own profile
   if (req.params.id !== req.user._id.toString()) {
@@ -45,9 +45,8 @@ const updateUserProfile = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: updatedUser });
 });
 
-// ─── @desc    Get user's unlocked achievements
-// ─── @route   GET /api/users/:id/achievements
-// ─── @access  Private
+//  Get user's unlocked achievements
+// ruute:   GET /api/users/:id/achievements
 const getUserAchievements = asyncHandler(async (req, res, next) => {
   const userAchievements = await UserAchievement.find({
     userId: req.params.id,
@@ -60,9 +59,8 @@ const getUserAchievements = asyncHandler(async (req, res, next) => {
   });
 });
 
-// ─── @desc    Get user stats summary
-// ─── @route   GET /api/users/:id/stats
-// ─── @access  Private
+//    Get user stats summary
+// Route:   GET /api/users/:id/stats
 const getUserStats = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.params.id);
 
