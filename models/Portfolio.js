@@ -49,3 +49,11 @@ const portfolioSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   },
 );
+
+// total portfolio value (cash + holdings)
+// currentValue of holdings must be calculated on the frontend using live prices
+portfolioSchema.virtual("totalCostBasis").get(function () {
+  return this.holdings.reduce((acc, h) => acc + h.quantity * h.avgBuyPrice, 0);
+});
+
+module.exports = mongoose.model("Portfolio", portfolioSchema);
