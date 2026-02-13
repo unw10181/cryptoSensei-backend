@@ -61,6 +61,33 @@ const getPortfolio = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: portfolio });
 });
 
+// ─── @desc    Update portfolio (name or description only)
+// ─── @route   PUT /api/portfolios/:id
+// ─── @access  Private
+const updatePortfolio = asyncHandler(async (req, res, next) => {
+  let portfolio = await Portfolio.findById(req.params.id);
+
+  if (!portfolio) {
+    return next(new AppError('Portfolio not found', 404));
+  }
+
+  if (portfolio.userId.toString() !== req.user._id.toString()) {
+    return next(new AppError('Not authorized to update this portfolio', 403));
+  }
+
+  const { name, description } = req.body;
+  const updateFields = {};
+  if (name) updateFields.name = name;
+  if (description !== undefined) updateFields.description = description;
+
+  portfolio = await Portfolio.findByIdAndUpdate(
+    req.params.id,
+    { $set: updateFields },
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({ success: true, data: portfolio });
+});
 
 
 
