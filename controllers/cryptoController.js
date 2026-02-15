@@ -39,3 +39,37 @@ const getCryptoPrices = asyncHandler(async (req, res, next) => {
 
 // Get current price for specific coins
 // GET /api/crypto/price/:coinId
+const getCoinPrice = asyncHandler(async (req, res, next) => {
+  const { coinId } = req.params;
+
+  const response = await axios.get(`${COINGECKO_BASE}/coins/markets`, {
+    params: {
+      vs_currency: "usd",
+      ids: coinId.toLowerCase(),
+      sparkline: false,
+      price_change_percentage: "24h,7d",
+    },
+  });
+
+  if (!response.data || response.data.length === 0) {
+    return next(new AppError(`Coin "${coinId}" not found`, 404));
+  }
+
+  const coin = response.data[0];
+
+  res.status(200).json({
+    success: true,
+    data: {
+      id: coin.id,
+      symbol: coin.symbol.toUpperCase(),
+      name: coin.name,
+      image: coin.image,
+      currentPrice: coin.current_price,
+      marketCap: coin.market_cap,
+      priceChange24h: coin.price_change_24h,
+      priceChangePercentage24h: coin.price_change_percentage_24h,
+      high24h: coin.high_24h,
+      low24h: coin.low_24h,
+    },
+  });
+});
