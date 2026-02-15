@@ -102,3 +102,29 @@ const searchCrypto = asyncHandler(async (req, res, next) => {
     data: results,
   });
 });
+
+// Get multiple coins valuation (for portfolio)
+// POST /api/crypto/batch-prices
+const getBatchPrices = asyncHandler(async (req, res, next) => {
+  const { coinIds } = req.body; // Array of CoinGecko IDs e.g. ["bitcoin", "ethereum"]
+
+  if (!coinIds || !Array.isArray(coinIds) || coinIds.length === 0) {
+    return next(new AppError("Please provide an array of coin IDs", 400));
+  }
+
+  const response = await axios.get(`${COINGECKO_BASE}/simple/price`, {
+    params: {
+      ids: coinIds.join(","),
+      vs_currencies: "usd",
+      include_24hr_change: true,
+      include_market_cap: true,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    data: response.data,
+  });
+});
+
+
