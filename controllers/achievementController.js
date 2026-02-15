@@ -16,3 +16,27 @@ const getAllAchievements = asyncHandler(async (req, res) => {
     data: achievements,
   });
 });
+
+// Get single achievement by ID
+// GET /api/achievements/:id
+const getAchievement = asyncHandler(async (req, res, next) => {
+  const achievement = await Achievement.findById(req.params.id);
+
+  if (!achievement) {
+    return next(new AppError('Achievement not found', 404));
+  }
+
+  res.status(200).json({ success: true, data: achievement });
+});
+
+// Manually trigger achievement check for logged-in user
+// POST /api/achievements/check
+const triggerAchievementCheck = asyncHandler(async (req, res) => {
+  const newlyUnlocked = await checkAchievements(req.user._id);
+
+  res.status(200).json({
+    success: true,
+    newlyUnlocked: newlyUnlocked.length,
+    data: newlyUnlocked,
+  });
+});
