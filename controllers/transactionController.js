@@ -187,3 +187,74 @@ const createTransaction = asyncHandler(async (req, res, next) => {
     xpAwarded: transaction.xpAwarded,
   });
 });
+
+// Delete transactions (Which will reverse Portfolio effects)
+// API: DELETE /api/transactions/:id
+const deleteTransaction = asyncHandler(async (req, res, next) => {
+  const transaction = await Transaction.findById(req.params.id);
+
+  if (!transaction) {
+    return next(new AppError("Transaction not found", 404));
+  }
+
+  if (transaction.userId.toString() !== req.user._id.toString()) {
+    return next(new AppError("Not authorized", 403));
+  }
+
+  const portfolio = await Portfolio.findById(transaction.portfolioId);
+  const symbolUpper = transaction.cryptoSymbol.toUpperCase();
+
+  // Reverse the transaction effects on the portfolio
+  if (transaction.type === "buy") {
+    // Reverse buy: return cash, remove holding
+    portfolio.cashBalance += transaction.totalValue;
+
+    const holdingIndex = portfolio.holdings.findIndex(
+      (h) => h.cryptoSymbol === symbolUpper,
+    );
+
+    if (holdingIndex >= 0) {
+      portfolio.holdings[holdingIndex].quantity -= transaction.quantity;
+      if (portfolio.holdings[holdingIndex].quantity <= 0) {
+        portfolio.holdings.splice(holdingIndex, 1);
+      }
+    }
+  } else if (transaction.type === "sell") {
+    // Reverse sell: deduct cash, restore holding
+    if (portfolio.cashBalance < transaction.totalValue) {
+      return next(
+        new AppError(
+          "Cannot reverse transaction: insufficient cash balance",
+          400,
+        ),
+      );
+    }
+
+    portfolio.cashBalance -= transaction.totalValue;
+
+    const holdingIndex = portfolio.holdings.findIndex(
+      (h) => h.cryptoSymbol === symbolUpper,
+    );
+
+    if (holdingIndex >= 0) {
+      portfolio.holdings[holdingIndex].quantity += transaction.quantity;
+    } else {
+      portfolio.holdings.push({
+        cryptoSymbol: symbolUpper,
+        cryptoName: transaction.cryptoName,
+        quantity: transaction.quantity,
+        avgBuyPrice: transaction.pricePerCoin,
+        imageUrl: transaction.cryptoImageUrl || "",
+      });
+    }
+  }
+
+  await portfolio.save();
+  await Transaction.findByIdAndDelete(req.params.id);
+
+  res.status(200).json({
+    success: true,
+    message: "Transaction deleted and portfolio updated",
+  });
+});
+
