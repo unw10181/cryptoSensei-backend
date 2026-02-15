@@ -77,7 +77,7 @@ const createTransaction = asyncHandler(async (req, res, next) => {
   const totalValue = quantity * pricePerCoin;
   const symbolUpper = cryptoSymbol.toUpperCase();
 
-  // BUY Logic 
+  // BUY Logic
   if (type === "buy") {
     if (portfolio.cashBalance < totalValue) {
       return next(
@@ -119,7 +119,7 @@ const createTransaction = asyncHandler(async (req, res, next) => {
     }
   }
 
-  //  SELL Logic 
+  //  SELL Logic
   if (type === "sell") {
     const holdingIndex = portfolio.holdings.findIndex(
       (h) => h.cryptoSymbol === symbolUpper,
@@ -258,3 +258,24 @@ const deleteTransaction = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Get all Transactions for logged in USER across all portfolios
+//  GET /api/transactions/user/all
+const getAllUserTransactions = asyncHandler(async (req, res) => {
+  const transactions = await Transaction.find({ userId: req.user._id })
+    .sort({ createdAt: -1 })
+    .populate("portfolioId", "name");
+
+  res.status(200).json({
+    success: true,
+    count: transactions.length,
+    data: transactions,
+  });
+});
+
+module.exports = {
+  getTransactions,
+  createTransaction,
+  getTransaction,
+  deleteTransaction,
+  getAllUserTransactions,
+};
