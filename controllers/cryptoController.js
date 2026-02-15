@@ -73,3 +73,32 @@ const getCoinPrice = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+// Search for a cryptocurrency by name or symbol
+// GET /api/crypto/search
+
+const searchCrypto = asyncHandler(async (req, res, next) => {
+  const { query } = req.query;
+
+  if (!query) {
+    return next(new AppError('Please provide a search query', 400));
+  }
+
+  const response = await axios.get(`${COINGECKO_BASE}/search`, {
+    params: { query },
+  });
+
+  const results = response.data.coins.slice(0, 10).map((coin) => ({
+    id: coin.id,
+    symbol: coin.symbol.toUpperCase(),
+    name: coin.name,
+    image: coin.thumb,
+    marketCapRank: coin.market_cap_rank,
+  }));
+
+  res.status(200).json({
+    success: true,
+    count: results.length,
+    data: results,
+  });
+});
