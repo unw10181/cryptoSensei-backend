@@ -5,7 +5,7 @@ dotenv.config({ path: "../.env" });
 const Achievement = require("../models/Achievement");
 
 const achievements = [
-  // ── BRONZE TIER ────────────────────────────────────────────────────────────
+  // BRONZE TIER 
   {
     name: "Arise",
     description:
@@ -59,7 +59,7 @@ const achievements = [
     xpReward: 75,
   },
 
-  // ── SILVER TIER ────────────────────────────────────────────────────────────
+  // SILVER TIER 
   {
     name: "Shadow Army",
     description: "Complete 10 trades. Your shadow army grows.",
@@ -101,7 +101,7 @@ const achievements = [
     xpReward: 250,
   },
 
-  // ── GOLD TIER ──────────────────────────────────────────────────────────────
+  // GOLD TIER 
   {
     name: "S-Rank Hunter",
     description: "Earn 10,000 XP. You stand at the top of all hunters.",
@@ -134,7 +134,7 @@ const achievements = [
     xpReward: 750,
   },
 
-  // ── LEGENDARY TIER ─────────────────────────────────────────────────────────
+  // LEGENDARY TIER
   {
     name: "Shadow Monarch",
     description:
