@@ -1,11 +1,12 @@
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-dotenv.config({ path: "../.env" });
-
+const connectDB = require("../config/db");
 const Achievement = require("../models/Achievement");
 
+//Load env
+dotenv.config({ path: "../.env" });
+
 const achievements = [
-  // BRONZE TIER 
+  // BRONZE TIER
   {
     name: "Arise",
     description:
@@ -59,7 +60,7 @@ const achievements = [
     xpReward: 75,
   },
 
-  // SILVER TIER 
+  // SILVER TIER
   {
     name: "Shadow Army",
     description: "Complete 10 trades. Your shadow army grows.",
@@ -101,7 +102,7 @@ const achievements = [
     xpReward: 250,
   },
 
-  // GOLD TIER 
+  // GOLD TIER
   {
     name: "S-Rank Hunter",
     description: "Earn 10,000 XP. You stand at the top of all hunters.",
@@ -150,7 +151,7 @@ const achievements = [
 
 const seedAchievements = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await connectDB();
     console.log("MongoDB connected for seeding...");
 
     // Clear existing achievements
@@ -159,7 +160,9 @@ const seedAchievements = async () => {
 
     // Insert new achievements
     await Achievement.insertMany(achievements);
-    console.log(`🏆 Seeded ${achievements.length} achievements successfully!`);
+    console.log(
+      `Congrats!! Seeded ${achievements.length} achievements successfully!`,
+    );
 
     console.log("\nAchievement Tiers:");
     console.log(
