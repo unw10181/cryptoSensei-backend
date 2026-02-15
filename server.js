@@ -5,9 +5,6 @@ const connectDb = require("./config/db");
 //ENV Config
 dotenv.config();
 
-const app = express();
-connectDb();
-
 // Route imports
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -16,16 +13,44 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const cryptoRoutes = require("./routes/cryptoRoutes");
 const achievementRoutes = require("./routes/achievementRoutes");
 
+const app = express();
+
+// Middleware
+app.express();
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/portfolios", portfolioRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/crypto", cryptoRoutes);
+app.use("/api/achievements", achievementRoutes);
+
 // Health Check
 app.get("/", (req, res) => {
   res.json({ message: "CryptoSensei API is running. Hayaku!" });
 });
 
-app.express();
+// Global Error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
 
-// Middleware
-app.use(express.urlencoded({ extended: true }));
+// 404 Error handling
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: "Route not found" });
+});
 
-app.listen(process.env.PORT, () =>
-  console.log(`Server running on port ${process.env.PORT}`),
-);
+// DB connection and start
+const PORT = process.env.PORT;
+
+connectDb();
+
+app.listen(PORT, () => {
+  console.log(`CryptoSensei server running on port ${PORT}, Hayaku!`);
+});
