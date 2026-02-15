@@ -127,4 +127,10 @@ const getBatchPrices = asyncHandler(async (req, res, next) => {
   });
 });
 
-
+module.exports = {
+  getCryptoPrices,
+  getCoinPrice,
+  getCoinHistory,
+  searchCrypto,
+  getBatchPrices,
+};
