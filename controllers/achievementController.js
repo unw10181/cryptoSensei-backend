@@ -40,3 +40,31 @@ const triggerAchievementCheck = asyncHandler(async (req, res) => {
     data: newlyUnlocked,
   });
 });
+
+//Get all achievements with user's unlock status
+// Route: GET /api/achievements/user-progress
+const getUserAchievementProgress = asyncHandler(async (req, res) => {
+  const allAchievements = await Achievement.find().sort({ xpReward: 1 });
+  const userUnlocked = await UserAchievement.find({
+    userId: req.user._id,
+  }).select("achievementId unlockedAt");
+
+  const unlockedMap = {};
+  userUnlocked.forEach((ua) => {
+    unlockedMap[ua.achievementId.toString()] = ua.unlockedAt;
+  });
+
+  const progressData = allAchievements.map((a) => ({
+    ...a.toObject(),
+    isUnlocked: !!unlockedMap[a._id.toString()],
+    unlockedAt: unlockedMap[a._id.toString()] || null,
+  }));
+
+  res.status(200).json({
+    success: true,
+    totalAchievements: allAchievements.length,
+    unlockedCount: userUnlocked.length,
+    data: progressData,
+  });
+});
+
