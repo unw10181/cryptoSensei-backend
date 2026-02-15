@@ -68,3 +68,10 @@ const getUserAchievementProgress = asyncHandler(async (req, res) => {
   });
 });
 
+module.exports = {
+  getAllAchievements,
+  getAchievement,
+  triggerAchievementCheck,
+  getUserAchievementProgress,
+};
+
