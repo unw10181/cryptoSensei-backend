@@ -29,7 +29,7 @@ const checkAchievements = async (userId) => {
       let shouldUnlock = false;
 
       switch (achievement.requirementKey) {
-        // ── Transaction-based ─────────────────────────────────────────────────
+        // Transaction-based 
         case "first_trade":
           shouldUnlock = transactions.length >= 1;
           break;
@@ -60,7 +60,7 @@ const checkAchievements = async (userId) => {
           shouldUnlock = transactions.some((t) => t.totalValue >= 50000);
           break;
 
-        // ── Portfolio-based ───────────────────────────────────────────────────
+        // ── Portfolio-based 
         case "first_portfolio":
           shouldUnlock = portfolios.length >= 1;
           break;
@@ -77,7 +77,7 @@ const checkAchievements = async (userId) => {
           shouldUnlock = new Set(allSymbols).size >= 5;
           break;
 
-        // ── Rank / XP-based ───────────────────────────────────────────────────
+        // Rank / XP-based 
         case "reach_d_rank":
           shouldUnlock = user.totalXP >= 100;
           break;
