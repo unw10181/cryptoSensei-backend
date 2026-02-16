@@ -14,23 +14,19 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const cryptoRoutes = require("./routes/cryptoRoutes");
 const achievementRoutes = require("./routes/achievementRoutes");
 
-// console.log({
-//   authRoutes,
-//   userRoutes,
-//   portfolioRoutes,
-//   transactionRoutes,
-//   cryptoRoutes,
-//   achievementRoutes,
-// });
-
 const app = express();
 
-// Middleware
+// ─── Middleware ───────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// ─── Health Check (BEFORE API routes) ────────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({ message: "CryptoSensei API is running. Hayaku!" });
+});
+
+// ─── API Routes ───────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/portfolios", portfolioRoutes);
@@ -38,12 +34,12 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/crypto", cryptoRoutes);
 app.use("/api/achievements", achievementRoutes);
 
-// Health Check
-app.get("/", (req, res) => {
-  res.json({ message: "CryptoSensei API is running. Hayaku!" });
+// ─── 404 Handler (MUST BE AFTER ALL ROUTES) ──────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: "Route not found" });
 });
 
-// Global Error handling
+// ─── Global Error Handler (MUST BE LAST) ─────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
@@ -52,13 +48,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 Error handling
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: "Route not found" });
-});
-
-// DB connection and start
-const PORT = process.env.PORT;
+// ─── DB Connection & Server Start ────────────────────────────────────────
+const PORT = process.env.PORT || 5000;
 
 connectDb();
 
