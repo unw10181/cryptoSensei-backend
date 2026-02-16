@@ -1,5 +1,6 @@
 const dotenv = require("dotenv");
 const express = require("express");
+const cors = require("cors");
 const connectDb = require("./config/db");
 
 //ENV Config
@@ -13,10 +14,20 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const cryptoRoutes = require("./routes/cryptoRoutes");
 const achievementRoutes = require("./routes/achievementRoutes");
 
+console.log({
+  authRoutes,
+  userRoutes,
+  portfolioRoutes,
+  transactionRoutes,
+  cryptoRoutes,
+  achievementRoutes,
+});
+
 const app = express();
 
 // Middleware
-app.express();
+app.use(cors());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
