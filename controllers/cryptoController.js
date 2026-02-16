@@ -74,6 +74,37 @@ const getCoinPrice = asyncHandler(async (req, res, next) => {
   });
 });
 
+//Get price history for 7 or 30 days
+//API: GET /api/crypto/history/:coinId
+const getCoinHistory = asyncHandler(async (req, res, next) => {
+  const { coinId } = req.params;
+  const { days = 7 } = req.query;
+
+  const response = await axios.get(
+    `${COINGECKO_BASE}/coins/${coinId.toLowerCase()}/market_chart`,
+    {
+      params: {
+        vs_currency: "usd",
+        days,
+      },
+    },
+  );
+
+  // Format for chart.js / recharts
+  const priceHistory = response.data.prices.map(([timestamp, price]) => ({
+    timestamp,
+    date: new Date(timestamp).toLocaleDateString(),
+    price: parseFloat(price.toFixed(2)),
+  }));
+
+  res.status(200).json({
+    success: true,
+    coinId,
+    days,
+    data: priceHistory,
+  });
+});
+
 // Search for a cryptocurrency by name or symbol
 // GET /api/crypto/search
 
