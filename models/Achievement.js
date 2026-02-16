@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const achievementSchema = new Schema(
+const achievementSchema = new mongoose.Schema(
   {
     name: {
       type: String,

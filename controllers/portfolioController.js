@@ -1,6 +1,6 @@
 const Portfolio = require("../models/Portfolio");
 const Transaction = require("../models/Transaction");
-const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
+const { asyncHandler, AppError } = require("../middleware/errMiddleware");
 
 //   Get all portfolios for logged-in user
 //   GET /api/portfolios

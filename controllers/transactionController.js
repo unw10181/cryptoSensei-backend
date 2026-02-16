@@ -1,6 +1,6 @@
 const Transaction = require("../models/Transaction");
 const Portfolio = require("../models/Portfolio");
-const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
+const { asyncHandler, AppError } = require("../middleware/errMiddleware");
 const { checkAchievements } = require("../utils/achievementChecker");
 
 // All api's private
@@ -186,6 +186,22 @@ const createTransaction = asyncHandler(async (req, res, next) => {
     newAchievements,
     xpAwarded: transaction.xpAwarded,
   });
+});
+
+//Get singular transaction
+//API: GET /api/transactions/:id
+const getTransaction = asyncHandler(async (req, res, next) => {
+  const transaction = await Transaction.findById(req.params.id);
+
+  if (!transaction) {
+    return next(new AppError("Transaction not found", 404));
+  }
+
+  if (transaction.userId.toString() !== req.user._id.toString()) {
+    return next(new AppError("Not authorized", 403));
+  }
+
+  res.status(200).json({ success: true, data: transaction });
 });
 
 // Delete transactions (Which will reverse Portfolio effects)

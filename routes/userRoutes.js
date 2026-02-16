@@ -5,7 +5,7 @@ const {
   updateUserProfile,
   getUserAchievements,
   getUserStats,
-} = require("../controllers/userController");
+} = require("../controllers/userControllers");
 const { protect } = require("../middleware/authMiddleware");
 
 // All user routes are protected

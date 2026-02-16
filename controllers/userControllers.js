@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const UserAchievement = require("../models/userAchievement");
-const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
+const { asyncHandler, AppError } = require("../middleware/errMiddleware");
 
 //    Get user profile by ID
 //    GET /api/users/:id

@@ -1,6 +1,6 @@
 const Achievement = require("../models/Achievement");
 const UserAchievement = require("../models/userAchievement");
-const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
+const { asyncHandler, AppError } = require("../middleware/errMiddleware");
 const { checkAchievements } = require("../utils/achievementChecker");
 
 
