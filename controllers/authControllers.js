@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const { asyncHandler, AppError } = require("../middleware/errorMiddleware");
+const { asyncHandler, AppError } = require("../middleware/errMiddleware");
 const { sendTokenResponse } = require("../utils/generateToken");
 
 // ─── @desc    Register new user

@@ -6,9 +6,11 @@ const asyncHandler = (fn) => (req, res, next) =>
 class AppError extends Error {
   constructor(message, statusCode) {
     super(message);
+
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
     this.isOperational = true;
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -16,18 +18,20 @@ class AppError extends Error {
 // Global error handler middleware
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
-  error.message = err.message;
+
+  error.message = err.message || "Server Error";
+  error.statusCode = err.statusCode || 500;
 
   // Mongoose bad ObjectId
   if (err.name === "CastError") {
     error.message = `Resource not found`;
     error.statusCode = 404;
   }
-};
 
-// Mongoose duplicate key
+  // Mongoose duplicate key
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
+
     error.message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
     error.statusCode = 400;
   }
@@ -37,26 +41,35 @@ const errorHandler = (err, req, res, next) => {
     error.message = Object.values(err.errors)
       .map((val) => val.message)
       .join(", ");
+
     error.statusCode = 400;
-
-    // JWT errors
-    if (err.name === "JsonWebTokenError") {
-      error.message = "Invalid token";
-      error.statusCode = 401;
-    }
-
-    if (err.name === "TokenExpiredError") {
-      error.message = "Token expired, please log in again";
-      error.statusCode = 401;
-    }
-
-    res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || "Server Error",
-      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-    });
+  }
+  // JWT errors
+  if (err.name === "JsonWebTokenError") {
+    error.message = "Invalid token";
+    error.statusCode = 401;
   }
 
-  module.exports = { asyncHandler, AppError, errorHandler };
+  if (err.name === "TokenExpiredError") {
+    error.message = "Token expired, please log in again";
+    error.statusCode = 401;
+  }
 
-  
+  //Send Response
+
+  res.status(error.statusCode).json({
+    success: false,
+    message: error.message,
+
+    // Only show stack in development
+    ...(process.env.NODE_ENV === "development" && {
+      stack: err.stack,
+    }),
+  });
+};
+
+module.exports = {
+  asyncHandler,
+  AppError,
+  errorHandler,
+};

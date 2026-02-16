@@ -5,7 +5,7 @@ const {
   login,
   logout,
   getMe,
-} = require("../controllers/authController");
+} = require("../controllers/authControllers");
 const { protect } = require("../middleware/authMiddleware");
 
 // POST /api/auth/register
