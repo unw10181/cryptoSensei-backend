@@ -62,10 +62,9 @@ const transactionSchema = new mongoose.Schema(
   },
 );
 
-// Auto-calculate totalValue before save 
-transactionSchema.pre('save', function (next) {
+// Auto-calculate totalValue before save
+transactionSchema.pre("save", async function () {
   this.totalValue = this.quantity * this.pricePerCoin;
-  next();
 });
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+module.exports = mongoose.model("Transaction", transactionSchema);

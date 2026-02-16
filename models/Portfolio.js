@@ -32,6 +32,7 @@ const portfolioSchema = new mongoose.Schema(
         quantity: { type: Number, required: true, min: 0 },
         avgBuyPrice: { type: Number, required: true },
         imageUrl: { type: String, default: "" },
+        default: [],
       },
     ],
     totalInvested: {
@@ -53,6 +54,7 @@ const portfolioSchema = new mongoose.Schema(
 // total portfolio value (cash + holdings)
 // currentValue of holdings must be calculated on the frontend using live prices
 portfolioSchema.virtual("totalCostBasis").get(function () {
+  if (!Array.isArray(this.holdings)) return 0;
   return this.holdings.reduce((acc, h) => acc + h.quantity * h.avgBuyPrice, 0);
 });
 

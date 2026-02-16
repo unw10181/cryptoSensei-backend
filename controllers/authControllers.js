@@ -2,9 +2,8 @@ const User = require("../models/User");
 const { asyncHandler, AppError } = require("../middleware/errMiddleware");
 const { sendTokenResponse } = require("../utils/generateToken");
 
-// ─── @desc    Register new user
-// ─── @route   POST /api/auth/register
-// ─── @access  Public
+// Register new user
+// POST /api/auth/register
 
 const register = asyncHandler(async (req, res, next) => {
   const { username, email, password } = req.body;
@@ -28,9 +27,8 @@ const register = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 201, res);
 });
 
-// ─── @desc    Login user
-// ─── @route   POST /api/auth/login
-// ─── @access  Public
+// Login user
+// POST /api/auth/login
 const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -48,9 +46,9 @@ const login = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
-// ─── @desc    Logout user (client-side token removal, server confirms)
-// ─── @route   POST /api/auth/logout
-// ─── @access  Private
+// Logout user (client-side token removal, server confirms)
+// API: POST /api/auth/logout
+// Private API
 const logout = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
@@ -58,9 +56,8 @@ const logout = asyncHandler(async (req, res) => {
   });
 });
 
-// ─── @desc    Get currently logged-in user
-// ─── @route   GET /api/auth/me
-// ─── @access  Private
+// Get currently logged-in user
+// GET /api/auth/me
 const getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   res.status(200).json({ success: true, data: user });
