@@ -14,14 +14,14 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const cryptoRoutes = require("./routes/cryptoRoutes");
 const achievementRoutes = require("./routes/achievementRoutes");
 
-console.log({
-  authRoutes,
-  userRoutes,
-  portfolioRoutes,
-  transactionRoutes,
-  cryptoRoutes,
-  achievementRoutes,
-});
+// console.log({
+//   authRoutes,
+//   userRoutes,
+//   portfolioRoutes,
+//   transactionRoutes,
+//   cryptoRoutes,
+//   achievementRoutes,
+// });
 
 const app = express();
 

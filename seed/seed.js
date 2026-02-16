@@ -3,7 +3,7 @@ const connectDB = require("../config/db");
 const Achievement = require("../models/Achievement");
 
 //Load env
-dotenv.config({ path: "../.env" });
+dotenv.config();
 
 const achievements = [
   // BRONZE TIER
