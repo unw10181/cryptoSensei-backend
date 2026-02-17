@@ -26,7 +26,19 @@ const achievementRoutes = require("./routes/achievementRoutes");
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      console.log("Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  }),
+);
+
+//pasring
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
