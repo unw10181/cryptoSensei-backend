@@ -2,14 +2,117 @@ const axios = require("axios");
 const { asyncHandler, AppError } = require("../middleware/errMiddleware");
 
 const COINGECKO_BASE =
-  process.env.COINGECKO_BASE_URL || "https://api.coingecko.com/api/v3"; //ENV api does not work.
+  process.env.COINGECKO_BASE_URL || "https://api.coingecko.com/api/v3";
 
-// Retrieve top 100 coins in API
-// GET /api/crypto/prices
+/**
+ * Simple in-memory cache (good for local + Render single instance)
+ * Keys -> { value, expiresAt }
+ */
+const cache = new Map();
+
+function now() {
+  return Date.now();
+}
+
+function getCache(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt < now()) return null;
+  return entry.value;
+}
+
+function setCache(key, value, ttlMs) {
+  cache.set(key, { value, expiresAt: now() + ttlMs });
+}
+
+/** return stale value even if expired (grace window) */
+function getStaleCache(key, graceMs = 5 * 60_000) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt + graceMs < now()) return null;
+  return entry.value;
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * CoinGecko fetch with:
+ * - retry on 429 with exponential backoff
+ * - optional cache
+ * - stale cache fallback when rate-limited
+ */
+async function cgGet({ url, params, cacheKey, ttlMs }) {
+  if (cacheKey) {
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+  }
+
+  const maxRetries = 5; // ⬅️ increased
+  let attempt = 0;
+  let lastErr = null;
+
+  while (attempt <= maxRetries) {
+    try {
+      const res = await axios.get(url, {
+        params,
+        timeout: 12_000,
+        headers: {
+          "User-Agent": "CryptoSensei/1.0 (education project)",
+        },
+      });
+
+      if (cacheKey && ttlMs) setCache(cacheKey, res.data, ttlMs);
+      return res.data;
+    } catch (e) {
+      lastErr = e;
+      const status = e?.response?.status;
+
+      // Retry on rate-limit (429) or transient 5xx
+      if (status === 429 || (status >= 500 && status <= 599)) {
+        // If we have stale cache, return it immediately to keep UI working
+        if (cacheKey) {
+          const stale = getStaleCache(cacheKey, 10 * 60_000); // allow up to 10 min stale
+          if (stale) return stale;
+        }
+
+        const retryAfterHeader = e?.response?.headers?.["retry-after"];
+        const retryAfterMs = retryAfterHeader
+          ? Number(retryAfterHeader) * 1000
+          : null;
+
+        // exponential backoff with cap
+        const backoffMs = retryAfterMs ?? Math.min(12_000, 700 * 2 ** attempt);
+        await sleep(backoffMs);
+        attempt += 1;
+        continue;
+      }
+
+      // Non-retryable error
+      throw e;
+    }
+  }
+
+  // Retries exhausted. Return stale if possible
+  if (cacheKey) {
+    const stale = getStaleCache(cacheKey, 15 * 60_000);
+    if (stale) return stale;
+  }
+
+  throw lastErr;
+}
+
+/**
+ * GET /api/crypto/prices?perPage=20&page=1
+ * Cache: 60 seconds (reduced spam; still feels “real-time”)
+ */
 const getCryptoPrices = asyncHandler(async (req, res, next) => {
   const { page = 1, perPage = 20 } = req.query;
+  const cacheKey = `markets:${page}:${perPage}`;
 
-  const response = await axios.get(`${COINGECKO_BASE}/coins/markets`, {
+  const data = await cgGet({
+    url: `${COINGECKO_BASE}/coins/markets`,
     params: {
       vs_currency: "usd",
       order: "market_cap_desc",
@@ -18,9 +121,11 @@ const getCryptoPrices = asyncHandler(async (req, res, next) => {
       sparkline: false,
       price_change_percentage: "24h",
     },
+    cacheKey,
+    ttlMs: 60_000, // ⬅️ was 30_000
   });
 
-  const coins = response.data.map((coin) => ({
+  const coins = (data || []).map((coin) => ({
     id: coin.id,
     symbol: coin.symbol.toUpperCase(),
     name: coin.name,
@@ -37,25 +142,31 @@ const getCryptoPrices = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, count: coins.length, data: coins });
 });
 
-// Get current price for specific coins
-// GET /api/crypto/price/:coinId
+/**
+ * GET /api/crypto/price/:coinId
+ * Cache: 60 seconds (trade simulator doesn’t need per-second pricing)
+ */
 const getCoinPrice = asyncHandler(async (req, res, next) => {
   const { coinId } = req.params;
+  const cacheKey = `price:${coinId.toLowerCase()}`;
 
-  const response = await axios.get(`${COINGECKO_BASE}/coins/markets`, {
+  const data = await cgGet({
+    url: `${COINGECKO_BASE}/coins/markets`,
     params: {
       vs_currency: "usd",
       ids: coinId.toLowerCase(),
       sparkline: false,
       price_change_percentage: "24h,7d",
     },
+    cacheKey,
+    ttlMs: 60_000,
   });
 
-  if (!response.data || response.data.length === 0) {
+  if (!data || data.length === 0) {
     return next(new AppError(`Coin "${coinId}" not found`, 404));
   }
 
-  const coin = response.data[0];
+  const coin = data[0];
 
   res.status(200).json({
     success: true,
@@ -74,27 +185,27 @@ const getCoinPrice = asyncHandler(async (req, res, next) => {
   });
 });
 
-//Get price history for 7 or 30 days
-//API: GET /api/crypto/history/:coinId
+/**
+ * GET /api/crypto/history/:coinId?days=7
+ * Cache: 10 minutes (history doesn’t need frequent refresh)
+ */
 const getCoinHistory = asyncHandler(async (req, res, next) => {
   const { coinId } = req.params;
   const { days = 7 } = req.query;
 
-  const response = await axios.get(
-    `${COINGECKO_BASE}/coins/${coinId.toLowerCase()}/market_chart`,
-    {
-      params: {
-        vs_currency: "usd",
-        days,
-      },
-    },
-  );
+  const cacheKey = `history:${coinId.toLowerCase()}:${days}`;
 
-  // Format for chart.js / recharts
-  const priceHistory = response.data.prices.map(([timestamp, price]) => ({
+  const data = await cgGet({
+    url: `${COINGECKO_BASE}/coins/${coinId.toLowerCase()}/market_chart`,
+    params: { vs_currency: "usd", days },
+    cacheKey,
+    ttlMs: 10 * 60_000, // ⬅️ was 5*60_000
+  });
+
+  const priceHistory = (data?.prices || []).map(([timestamp, price]) => ({
     timestamp,
     date: new Date(timestamp).toLocaleDateString(),
-    price: parseFloat(price.toFixed(2)),
+    price: parseFloat(Number(price).toFixed(2)),
   }));
 
   res.status(200).json({
@@ -105,21 +216,28 @@ const getCoinHistory = asyncHandler(async (req, res, next) => {
   });
 });
 
-// Search for a cryptocurrency by name or symbol
-// GET /api/crypto/search
-
+/**
+ * GET /api/crypto/search?query=btc
+ * Cache: 60 seconds per query
+ */
 const searchCrypto = asyncHandler(async (req, res, next) => {
   const { query } = req.query;
 
   if (!query) {
-    return next(new AppError('Please provide a search query', 400));
+    return next(new AppError("Please provide a search query", 400));
   }
 
-  const response = await axios.get(`${COINGECKO_BASE}/search`, {
-    params: { query },
+  const q = String(query).trim().toLowerCase();
+  const cacheKey = `search:${q}`;
+
+  const data = await cgGet({
+    url: `${COINGECKO_BASE}/search`,
+    params: { query: q },
+    cacheKey,
+    ttlMs: 60_000, // ⬅️ was 30_000
   });
 
-  const results = response.data.coins.slice(0, 10).map((coin) => ({
+  const results = (data?.coins || []).slice(0, 10).map((coin) => ({
     id: coin.id,
     symbol: coin.symbol.toUpperCase(),
     name: coin.name,
@@ -134,28 +252,33 @@ const searchCrypto = asyncHandler(async (req, res, next) => {
   });
 });
 
-// Get multiple coins valuation (for portfolio)
-// POST /api/crypto/batch-prices
+/**
+ * POST /api/crypto/batch-prices { coinIds: ["bitcoin","ethereum"] }
+ * Cache: 30 seconds for same set
+ */
 const getBatchPrices = asyncHandler(async (req, res, next) => {
-  const { coinIds } = req.body; // Array of CoinGecko IDs e.g. ["bitcoin", "ethereum"]
+  const { coinIds } = req.body;
 
   if (!coinIds || !Array.isArray(coinIds) || coinIds.length === 0) {
     return next(new AppError("Please provide an array of coin IDs", 400));
   }
 
-  const response = await axios.get(`${COINGECKO_BASE}/simple/price`, {
+  const ids = [...new Set(coinIds.map((x) => String(x).toLowerCase()))].sort();
+  const cacheKey = `batch:${ids.join(",")}`;
+
+  const data = await cgGet({
+    url: `${COINGECKO_BASE}/simple/price`,
     params: {
-      ids: coinIds.join(","),
+      ids: ids.join(","),
       vs_currencies: "usd",
       include_24hr_change: true,
       include_market_cap: true,
     },
+    cacheKey,
+    ttlMs: 30_000,
   });
 
-  res.status(200).json({
-    success: true,
-    data: response.data,
-  });
+  res.status(200).json({ success: true, data });
 });
 
 module.exports = {
