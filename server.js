@@ -32,22 +32,22 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: function (origin, cb) {
-      if (!origin) return cb(null, true); // allow Postman/no-origin
-      if (allowedOrigins.includes(origin)) return cb(null, true);
-      console.log("Blocked by CORS:", origin);
-      return cb(new Error("Not allowed by CORS: " + origin));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+const corsOptions = {
+  origin: function (origin, cb) {
+    if (!origin) return cb(null, true); // Postman / server requests
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    console.log("Blocked by CORS:", origin);
+    return cb(new Error("Not allowed by CORS: " + origin));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-// ✅ IMPORTANT: handle preflight for all routes
-app.options("*", cors());
+app.use(cors(corsOptions));
+
+// ✅ Preflight for all routes (regex instead of "*")
+app.options(/.*/, cors(corsOptions));
 
 //pasring
 app.use(express.json());
