@@ -47,7 +47,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// ✅ Preflight for all routes (regex instead of "*")
+//Preflight for all routes (regex instead of "*")
 app.options(/.*/, cors(corsOptions));
 
 //pasring
