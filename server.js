@@ -28,6 +28,7 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:4000",
   "https://cryptosenseii.netlify.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
