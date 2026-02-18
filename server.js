@@ -26,17 +26,28 @@ const achievementRoutes = require("./routes/achievementRoutes");
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://cryptosenseii.netlify.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+    origin: function (origin, cb) {
+      if (!origin) return cb(null, true); // allow Postman/no-origin
+      if (allowedOrigins.includes(origin)) return cb(null, true);
       console.log("Blocked by CORS:", origin);
-      return callback(new Error("Not allowed by CORS"));
+      return cb(new Error("Not allowed by CORS: " + origin));
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+// ✅ IMPORTANT: handle preflight for all routes
+app.options("*", cors());
 
 //pasring
 app.use(express.json());
